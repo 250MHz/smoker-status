@@ -1476,7 +1476,7 @@ wheels = [
 [[package]]
 name = "smoker-status"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "notebook" },
@@ -1493,6 +1493,9 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "scikit-learn", specifier = ">=1.5.2" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "smoker-status", editable = "." }]
 
 [[package]]
 name = "sniffio"

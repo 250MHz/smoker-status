@@ -11,3 +11,19 @@ dependencies = [
     "pandas>=2.2.3",
     "scikit-learn>=1.5.2",
 ]
+
+# https://github.com/astral-sh/uv/issues/1626#issuecomment-2394365983
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["smoker_status"]
+
+[tool.uv]
+dev-dependencies = [
+    "smoker-status",
+]
+
+[tool.uv.sources]
+smoker-status = { workspace = true }
