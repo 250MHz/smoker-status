@@ -1,0 +1,32 @@
+[project]
+name = "smoker-status"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.9.2",
+    "notebook>=7.2.2",
+    "numpy>=2.1.2",
+    "pandas>=2.2.3",
+    "scikit-learn>=1.5.2",
+]
+
+# https://github.com/astral-sh/uv/issues/1626#issuecomment-2394365983
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.setuptools]
+packages = ["smoker_status"]
+
+[tool.uv]
+dev-dependencies = [
+    "smoker-status",
+]
+
+[tool.uv.sources]
+smoker-status = { workspace = true }
