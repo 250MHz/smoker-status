@@ -27,3 +27,82 @@ def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
         ],
     )
     return pd.concat([X_no_cat_feat, X_only_cat_feat_trans], axis=1)
+
+
+def set_sex(row: pd.Series) -> int:
+    """Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to
+    each row.
+    """
+    # Male, increase score by 1. Female, decrease score by 1. If score == 0,
+    # then neither had majority, so np.nan
+    score = 0
+    # Rough heuristic based on Table 2 from doi: 10.4178/epih.e2022024
+    if row['age'] >= 19 and row['age'] <= 29:
+        if row['height(cm)'] <= 165:
+            score -= 1
+        elif row['height(cm)'] >= 170:
+            score += 1
+        if row['weight(kg)'] <= 55:
+            score -= 1
+        elif row['weight(kg)'] >= 70:
+            score += 1
+        else: # [60, 65]
+            pass
+    elif row['age'] >= 30 and row['age'] <= 39:
+        if row['height(cm)'] <= 165:
+            score -= 1
+        elif row['height(cm)'] >= 170:
+            score += 1
+        if row['weight(kg)'] <= 60:
+            score -= 1
+        elif row['weight(kg)'] >= 75:
+            score += 1
+        else: # [65, 70]
+            pass
+    elif row['age'] >= 40 and row['age'] <= 49:
+        if row['height(cm)'] <= 160:
+            score -= 1
+        elif row['height(cm)'] >= 170:
+            score += 1
+        else: # [165]
+            pass
+        if row['weight(kg)'] <= 60:
+            score -= 1
+        elif row['weight(kg)'] >= 70:
+            score += 1
+        else: # [65]
+            pass
+    elif row['age'] >= 50 and row['age'] <= 59:
+        if row['height(cm)'] <= 160:
+            score -= 1
+        elif row['height(cm)'] >= 165:
+            score += 1
+        if row['weight(kg)'] <= 60:
+            score -= 1
+        elif row['weight(kg)'] >= 70:
+            score += 1
+        else: # [65]
+            pass
+    elif row['age'] >= 60 and row['age'] <= 69:
+        if row['height(cm)'] <= 160:
+            score -= 1
+        elif row['height(cm)'] >= 165:
+            score += 1
+        if row['weight(kg)'] <= 55:
+            score -= 1
+        elif row['weight(kg)'] >= 70:
+            score += 1
+        else: # [60, 65]
+            pass
+    elif row['age'] >= 70:
+        if row['height(cm)'] <= 155:
+            score -= 1
+        elif row['height(cm)'] >= 160:
+            score += 1
+        if row['weight(kg)'] <= 55:
+            score -= 1
+        elif row['weight(kg)'] >= 65:
+            score += 1
+        else: # [60]
+            pass
+    return score
