@@ -5,9 +5,9 @@ import seaborn as sns
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import mutual_info_classif, RFECV
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -109,6 +109,21 @@ def cluster_and_classify(
         X_group = X[X['Cluster'] == i]
         X_group.drop(['Cluster'], axis=1)
         y = X_group.pop('smoking')
+
+        # Feature selection
+        # min_features_to_select = 1
+        # cross_validator = StratifiedKFold(5)
+        # rfecv = RFECV(
+        #     estimator=clf,
+        #     step=1,
+        #     cv=cross_validator,
+        #     scoring='roc_auc',
+        #     min_features_to_select=min_features_to_select,
+        #     n_jobs=-1
+        # )
+        # rfecv.fit(X_group, y)
+        # print(f'Optimal number of features: {rfecv.n_features_}')
+        # X_group = X_group[rfecv.get_feature_names_out()]
 
         cv_accuracy = cross_val_score(
             clf, X_group, y, cv=cv, scoring='accuracy', n_jobs=n_jobs
