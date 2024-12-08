@@ -149,6 +149,30 @@ def set_triglyceride_class(row: pd.Series) -> int:
         return 3
 
 
+def set_FPG_class(row: pd.Series) -> int:
+    """Returns value for fasting plasma glucose (FPG) class based on
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11307112/ and
+    https://www.who.int/data/gho/indicator-metadata-registry/imr-details/2380.
+
+    0: hypoglycemia
+    1: normal
+    2: prediabetes
+    3: possible diabetes
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    FPG = row['fasting blood sugar']
+    if FPG < 70:
+        return 0
+    elif FPG < 100:
+        return 1
+    elif FPG < 126:
+        return 2
+    elif FPG >= 126:
+        return 3
+
+
 def set_sex(row: pd.Series) -> int:
     """Returns value for sex. Value is based on a rough heuristic using
     measured height and weight values from Table 2 of this paper
