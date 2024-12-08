@@ -150,7 +150,7 @@ def set_sex(row: pd.Series) -> int:
             score -= 1
         elif row['weight(kg)'] >= 70:
             score += 1
-        else: # [60, 65]
+        else:  # [60, 65]
             pass
     elif row['age'] >= 30 and row['age'] <= 39:
         if row['height(cm)'] <= 165:
@@ -161,20 +161,20 @@ def set_sex(row: pd.Series) -> int:
             score -= 1
         elif row['weight(kg)'] >= 75:
             score += 1
-        else: # [65, 70]
+        else:  # [65, 70]
             pass
     elif row['age'] >= 40 and row['age'] <= 49:
         if row['height(cm)'] <= 160:
             score -= 1
         elif row['height(cm)'] >= 170:
             score += 1
-        else: # [165]
+        else:  # [165]
             pass
         if row['weight(kg)'] <= 60:
             score -= 1
         elif row['weight(kg)'] >= 70:
             score += 1
-        else: # [65]
+        else:  # [65]
             pass
     elif row['age'] >= 50 and row['age'] <= 59:
         if row['height(cm)'] <= 160:
@@ -185,7 +185,7 @@ def set_sex(row: pd.Series) -> int:
             score -= 1
         elif row['weight(kg)'] >= 70:
             score += 1
-        else: # [65]
+        else:  # [65]
             pass
     elif row['age'] >= 60 and row['age'] <= 69:
         if row['height(cm)'] <= 160:
@@ -196,7 +196,7 @@ def set_sex(row: pd.Series) -> int:
             score -= 1
         elif row['weight(kg)'] >= 70:
             score += 1
-        else: # [60, 65]
+        else:  # [60, 65]
             pass
     elif row['age'] >= 70:
         if row['height(cm)'] <= 155:
@@ -207,7 +207,7 @@ def set_sex(row: pd.Series) -> int:
             score -= 1
         elif row['weight(kg)'] >= 65:
             score += 1
-        else: # [60]
+        else:  # [60]
             pass
     return score
 
@@ -225,7 +225,7 @@ def set_anemia(row: pd.Series) -> int:
     row. Must have the `sex` feature from `set_sex`.
     """
     hb_level = row['hemoglobin']
-    if row['sex'] > 0: # male
+    if row['sex'] > 0:  # male
         if hb_level >= 13:
             return 0
         elif hb_level >= 11:
@@ -234,7 +234,7 @@ def set_anemia(row: pd.Series) -> int:
             return 2
         elif hb_level < 8:
             return 3
-    else: # female
+    else:  # female
         if hb_level >= 12:
             return 0
         elif hb_level >= 11:
@@ -243,3 +243,18 @@ def set_anemia(row: pd.Series) -> int:
             return 2
         elif hb_level < 8:
             return 3
+
+
+def add_GGT_level(df: pd.DataFrame) -> int:
+    """Adds the `GGT level` feature to `df`. GGT level is the quartile
+    (0 to 3) that a subject's `Gtp` value is in within their sex.
+
+    `df` must have the `sex` feature from `set_sex`.
+    """
+    df.loc[df['sex'] > 0, ['GGT level']] = pd.qcut(
+        df[df['sex'] > 0]['Gtp'], 4, labels=False
+    )
+    df.loc[df['sex'] < 0, ['GGT level']] = pd.qcut(
+        df[df['sex'] < 0]['Gtp'], 4, labels=False
+    )
+    df['GGT level'] = df['GGT level'].astype(int)
