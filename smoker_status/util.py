@@ -129,6 +129,28 @@ def cluster_and_classify(
     return (accuracy_scores, fpr_list, tpr_list, AUC_list)
 
 
+def make_mi_scores(
+    X: pd.DataFrame, y: pd.Series, discrete_features: pd.Series
+) -> np.ndarray:
+    """https://www.kaggle.com/code/ryanholbrook/mutual-information"""
+    mi_scores = mutual_info_classif(
+        X, y, discrete_features=discrete_features, random_state=0
+    )
+    mi_scores = pd.Series(mi_scores, name='MI Scores', index=X.columns)
+    mi_scores = mi_scores.sort_values(ascending=False)
+    return mi_scores
+
+
+def plot_mi_score(scores: pd.Series):
+    """https://www.kaggle.com/code/ryanholbrook/mutual-information"""
+    scores = scores.sort_values(ascending=True)
+    width = np.arange(len(scores))
+    ticks = list(scores.index)
+    plt.barh(width, scores)
+    plt.yticks(width, ticks)
+    plt.title('Mutual Information Scores')
+
+
 def plot_feature_histograms(X: pd.DataFrame):
     """Taken from https://github.com/Koda98/smoker-status-prediction/blob/main/notebook.ipynb"""
     num_cols = len(X.columns)
