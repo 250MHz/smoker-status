@@ -1,6 +1,37 @@
 import numpy as np
 import pandas as pd
+from sklearn.impute import KNNImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+def setup_X(X: pd.DataFrame) -> pd.DataFrame:
+    X = X.copy(deep=True)
+    X['sex'] = X.apply(set_sex, axis=1)
+    # Some 'sex' values are missing, impute the rest
+    imputer = KNNImputer(n_neighbors=5, missing_values=0)
+    X_trans = imputer.fit_transform(X[['age', 'height(cm)', 'weight(kg)', 'sex']])
+    X_full_sex = pd.DataFrame(
+        X_trans, columns=['age', 'height(cm)', 'weight(kg)', 'sex']
+    )
+    X['sex'] = X_full_sex['sex']
+    X['anemia'] = X.apply(set_anemia, axis=1)
+    X['HDL class'] = X.apply(set_HDL_class, axis=1)
+    X['LDL class'] = X.apply(set_LDL_class, axis=1)
+    X['Cholesterol class'] = X.apply(set_cholesterol_class, axis=1)
+    X['blood pressure class'] = X.apply(set_blood_pressure_class, axis=1)
+    add_GGT_level(X)
+    X['triglyceride class'] = X.apply(set_triglyceride_class, axis=1)
+    X['creatinine class'] = X.apply(set_creatinine_class, axis=1)
+    X['ALT class'] = X.apply(set_ALT_class, axis=1)
+    X['AST class'] = X.apply(set_AST_class, axis=1)
+    add_de_ritis_level(X)
+    X['FPG class'] = X.apply(set_FPG_class, axis=1)
+    add_BMI(X)
+    X['BMI class'] = X.apply(set_BMI_class, axis=1)
+    update_blindness_zero(X)
+    X = log_transform_X(X)
+    X = scale_X(X)[1]
+    return X
 
 
 def log_transform_X(X: pd.DataFrame, feats: list[str] = None) -> pd.DataFrame:
@@ -38,7 +69,9 @@ def log_transform_X(X: pd.DataFrame, feats: list[str] = None) -> pd.DataFrame:
     return X_copy
 
 
-def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, pd.DataFrame]:
+def scale_X(
+    X: pd.DataFrame, feats: list[str] = None
+) -> tuple[StandardScaler, pd.DataFrame]:
     """Creates a standard scaler, fits on `X`, and return a 2-tuple with
     the scaler and scaled copy of X.
 
@@ -101,7 +134,9 @@ def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, p
     return (scaler, pd.concat([X_without_feats, X_only_feats_scaled], axis=1))
 
 
-def one_hot_encode_X(X: pd.DataFrame, feats: list[str] = None, encoded_cols: list[str] = None) -> tuple[OneHotEncoder, pd.DataFrame]:
+def one_hot_encode_X(
+    X: pd.DataFrame, feats: list[str] = None, encoded_cols: list[str] = None
+) -> tuple[OneHotEncoder, pd.DataFrame]:
     """Creates a `OneHotEncoder`, fits on `X`, and return a 2-tuple
     with the encoder and encoded copy of `X`.
 
@@ -157,13 +192,12 @@ def one_hot_encode_X(X: pd.DataFrame, feats: list[str] = None, encoded_cols: lis
     X = X.copy(deep=True)
     X_no_feats = X.drop(feats, axis=1)
     X_only_feats = X[feats]
-    X_only_feats['sex'] = X_only_feats.apply(lambda x:  0 if x['sex'] < 0 else 1, axis=1)
+    X_only_feats['sex'] = X_only_feats.apply(lambda x: 0 if x['sex'] < 0 else 1, axis=1)
 
     enc = OneHotEncoder(dtype=np.int64)
     enc.fit(X_only_feats)
     X_only_feats_trans = pd.DataFrame(
-        data=enc.transform(X_only_feats).toarray(),
-        columns=encoded_cols
+        data=enc.transform(X_only_feats).toarray(), columns=encoded_cols
     )
     return (enc, pd.concat([X_no_feats, X_only_feats_trans], axis=1))
 
@@ -585,10 +619,10 @@ def add_GGT_level(df: pd.DataFrame):
     """
     df.loc[df['sex'] > 0, ['GGT level']] = pd.qcut(
         df[df['sex'] > 0]['Gtp'], 4, labels=False
-    )
+    ).astype(int)
     df.loc[df['sex'] < 0, ['GGT level']] = pd.qcut(
         df[df['sex'] < 0]['Gtp'], 4, labels=False
-    )
+    ).astype(int)
     df['GGT level'] = df['GGT level'].astype(int)
 
 
