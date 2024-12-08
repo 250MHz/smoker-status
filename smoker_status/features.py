@@ -38,7 +38,9 @@ def log_transform_X(X: pd.DataFrame, feats: list[str] = None) -> pd.DataFrame:
     return X_copy
 
 
-def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, pd.DataFrame]:
+def scale_X(
+    X: pd.DataFrame, feats: list[str] = None
+) -> tuple[StandardScaler, pd.DataFrame]:
     """Creates a standard scaler, fits on `X`, and return a 2-tuple with
     the scaler and scaled copy of X.
 
@@ -101,7 +103,9 @@ def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, p
     return (scaler, pd.concat([X_without_feats, X_only_feats_scaled], axis=1))
 
 
-def one_hot_encode_X(X: pd.DataFrame, feats: list[str] = None, encoded_cols: list[str] = None) -> tuple[OneHotEncoder, pd.DataFrame]:
+def one_hot_encode_X(
+    X: pd.DataFrame, feats: list[str] = None, encoded_cols: list[str] = None
+) -> tuple[OneHotEncoder, pd.DataFrame]:
     """Creates a `OneHotEncoder`, fits on `X`, and return a 2-tuple
     with the encoder and encoded copy of `X`.
 
@@ -157,13 +161,12 @@ def one_hot_encode_X(X: pd.DataFrame, feats: list[str] = None, encoded_cols: lis
     X = X.copy(deep=True)
     X_no_feats = X.drop(feats, axis=1)
     X_only_feats = X[feats]
-    X_only_feats['sex'] = X_only_feats.apply(lambda x:  0 if x['sex'] < 0 else 1, axis=1)
+    X_only_feats['sex'] = X_only_feats.apply(lambda x: 0 if x['sex'] < 0 else 1, axis=1)
 
     enc = OneHotEncoder(dtype=np.int64)
     enc.fit(X_only_feats)
     X_only_feats_trans = pd.DataFrame(
-        data=enc.transform(X_only_feats).toarray(),
-        columns=encoded_cols
+        data=enc.transform(X_only_feats).toarray(), columns=encoded_cols
     )
     return (enc, pd.concat([X_no_feats, X_only_feats_trans], axis=1))
 
