@@ -394,7 +394,7 @@ def set_AST_class(row: pd.Series) -> int:
             return 1
 
 
-def add_GGT_level(df: pd.DataFrame) -> int:
+def add_GGT_level(df: pd.DataFrame):
     """Adds the `GGT level` feature to `df`. GGT level is the quartile
     (0 to 3) that a subject's `Gtp` value is in within their sex.
 
@@ -409,11 +409,11 @@ def add_GGT_level(df: pd.DataFrame) -> int:
     df['GGT level'] = df['GGT level'].astype(int)
 
 
-def add_de_ritis_level(df: pd.DataFrame) -> int:
+def add_de_ritis_level(df: pd.DataFrame):
     """Adds the `AST/ALT` (De Ritis ratio) feature to `df`."""
     df['AST/ALT'] = df['AST'] / df['ALT']
 
 
-def add_BMI(df: pd.DataFrame) -> int:
+def add_BMI(df: pd.DataFrame):
     """Adds a `BMI` feature to `df`."""
     df['BMI'] = df['weight(kg)'] / (df['height(cm)'] / 100) ** 2
