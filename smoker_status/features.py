@@ -29,6 +29,18 @@ def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([X_no_cat_feat, X_only_cat_feat_trans], axis=1)
 
 
+def update_blindness_zero(df: pd.DataFrame):
+    """Sets instances of `eyesight(left)` or `eyesight(right)` which
+    are 9.9 to 0.
+
+    This matches the ordinality where 0.1 (minimum) means 20/200 VA
+    and 2.0 (maximum ignoring 9.9) means 20/10 VA. It doesn't make sense
+    to have blindness above the best vision.
+    """
+    df['eyesight(left)'] = df['eyesight(left)'].replace(to_replace=9.9, value=0)
+    df['eyesight(right)'] = df['eyesight(right)'].replace(to_replace=9.9, value=0)
+
+
 def set_HDL_class(row: pd.Series) -> int:
     """Returns value for HDL cholesterol class based on Adult Treatment
     Panel III's classification https://doi.org/10.1001/jama.285.19.2486.
