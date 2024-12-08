@@ -95,6 +95,37 @@ def set_cholesterol_class(row: pd.Series) -> int:
         return 2
 
 
+def set_blood_pressure_class(row: pd.Series) -> int:
+    """Returns value for blood pressure and hypertension class based on
+    2018 Korean Society of Hypertension guidelines
+    https://doi.org/10.1186/s40885-019-0121-0.
+
+    0: normal blood pressure
+    1: elevated blood pressure
+    2: prehypertension
+    3: hypertension grade 1
+    4: hypertension grade 2
+    5: isolated systolic hypertension
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    systolic_bp: int = row['systolic']
+    diastolic_bp: int = row['relaxation']
+    if systolic_bp < 120 and diastolic_bp < 80:
+        return 0
+    elif systolic_bp in range(120, 130) and diastolic_bp < 80:
+        return 1
+    elif systolic_bp in range(130, 140) or diastolic_bp in range(80, 90):
+        return 2
+    elif systolic_bp in range(140, 160) or diastolic_bp in range(90, 100):
+        return 3
+    elif systolic_bp >= 160 or diastolic_bp >= 100:
+        return 4
+    elif systolic_bp >= 140 and diastolic_bp < 90:
+        return 5
+
+
 def set_sex(row: pd.Series) -> int:
     """Returns value for sex. Value is based on a rough heuristic using
     measured height and weight values from Table 2 of this paper
