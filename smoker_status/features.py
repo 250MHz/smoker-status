@@ -1,6 +1,104 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+def log_transform_X(X: pd.DataFrame, feats: list[str] = None) -> pd.DataFrame:
+    """Applies `numpy.log1p` to the features in `feats` on a copy of `X`
+    and returns the copy of `X`.
+
+    If `feats` is None (default), the following features will be
+    transformed:
+    * fasting blood sugar
+    * triglyceride
+    * LDL
+    * serum creatinine
+    * AST
+    * ALT
+    * AST/ALT
+    * Gtp
+
+    If `feats` is not None, then only the features you pass will be
+    transformed.
+    """
+    if feats is None:
+        feats = [
+            'fasting blood sugar',
+            'triglyceride',
+            'LDL',
+            'serum creatinine',
+            'AST',
+            'ALT',
+            'AST/ALT',
+            'Gtp',
+        ]
+    X_copy = X.copy(deep=True)
+    for feat in feats:
+        X_copy[feat] = X_copy[feat].apply(np.log1p)
+    return X_copy
+
+
+def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, pd.DataFrame]:
+    """Creates a standard scaler, fits on `X`, and return a 2-tuple with
+    the scaler and scaled copy of X.
+
+    If `feats` is None (default), the following features will be scaled:
+    * age
+    * height(cm)
+    * weight(kg)
+    * waist(cm)
+    * systolic
+    * relaxation
+    * fasting blood sugar
+    * Cholesterol
+    * triglyceride
+    * HDL
+    * LDL
+    * hemoglobin
+    * serum creatinine
+    * AST
+    * ALT
+    * Gtp
+    * AST/ALT
+    * BMI
+
+    If `feats` is not None, then only the features you pass will be
+    scaled.
+
+    Add the extra features and log transform first before scaling if
+    you are using the default `feats`.
+    """
+    if feats is None:
+        feats = [
+            'age',
+            'height(cm)',
+            'weight(kg)',
+            'waist(cm)',
+            'systolic',
+            'relaxation',
+            'fasting blood sugar',
+            'Cholesterol',
+            'triglyceride',
+            'HDL',
+            'LDL',
+            'hemoglobin',
+            'serum creatinine',
+            'AST',
+            'ALT',
+            'Gtp',
+            'AST/ALT',
+            'BMI',
+        ]
+    X = X.copy(deep=True)
+    X_without_feats = X.drop(feats, axis=1)
+    X_only_feats = X[feats]
+
+    scaler = StandardScaler()
+    scaler.fit(X_only_feats)
+    X_only_feats_scaled = pd.DataFrame(
+        data=scaler.transform(X_only_feats), columns=feats
+    )
+    return (scaler, pd.concat([X_without_feats, X_only_feats_scaled], axis=1))
 
 
 def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
