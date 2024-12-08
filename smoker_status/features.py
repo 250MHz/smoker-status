@@ -268,6 +268,31 @@ def set_anemia(row: pd.Series) -> int:
             return 3
 
 
+def set_creatinine_class(row: pd.Series) -> int:
+    """Returns value for creatinine class based on recommended limits
+    from Lee J, Kim J, Park I, et al. A Study on the Appropriate Normal
+    Range of Serum Creatinine Level for Koreans. Korean J Nephrol.
+    2004;23(5):721-728. https://www.koreamed.org/SearchBasic.php?RID=2307256
+
+    0: normal
+    1: abnormal
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row. Must have the `sex` feature from `set_sex`.
+    """
+    sCr = row['serum creatinine']
+    if row['sex'] > 0:  # male
+        if sCr < 1.2:
+            return 0
+        else:
+            return 1
+    else:  # female
+        if sCr < 1:
+            return 0
+        else:
+            return 1
+
+
 def add_GGT_level(df: pd.DataFrame) -> int:
     """Adds the `GGT level` feature to `df`. GGT level is the quartile
     (0 to 3) that a subject's `Gtp` value is in within their sex.
