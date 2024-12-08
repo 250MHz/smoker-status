@@ -293,6 +293,52 @@ def set_creatinine_class(row: pd.Series) -> int:
             return 1
 
 
+def set_ALT_class(row: pd.Series) -> int:
+    """Returns value for ALT class based on ULN conclusion from
+    https://doi.org/10.1111/j.1440-1746.2012.07143.x.
+
+    0: normal
+    1: abnormal
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row. Must have the `sex` feature from `set_sex`.
+    """
+    ALT = row['ALT']
+    if row['sex'] > 0:  # male
+        if ALT < 34:
+            return 0
+        else:
+            return 1
+    else:  # female
+        if ALT < 24:
+            return 0
+        else:
+            return 1
+
+
+def set_AST_class(row: pd.Series) -> int:
+    """Returns value for AST class based on ULN conclusion from
+    https://doi.org/10.1111/j.1440-1746.2012.07143.x.
+
+    0: normal
+    1: abnormal
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row. Must have the `sex` feature from `set_sex`.
+    """
+    AST = row['AST']
+    if row['sex'] > 0:  # male
+        if AST < 32:
+            return 0
+        else:
+            return 1
+    else:  # female
+        if AST < 26:
+            return 0
+        else:
+            return 1
+
+
 def add_GGT_level(df: pd.DataFrame) -> int:
     """Adds the `GGT level` feature to `df`. GGT level is the quartile
     (0 to 3) that a subject's `Gtp` value is in within their sex.
@@ -306,3 +352,8 @@ def add_GGT_level(df: pd.DataFrame) -> int:
         df[df['sex'] < 0]['Gtp'], 4, labels=False
     )
     df['GGT level'] = df['GGT level'].astype(int)
+
+
+def add_de_ritis_level(df: pd.DataFrame) -> int:
+    """Adds the `AST/ALT` (De Ritis ratio) feature to `df`."""
+    df['AST/ALT'] = df['AST'] / df['ALT']
