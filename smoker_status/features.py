@@ -173,6 +173,37 @@ def set_FPG_class(row: pd.Series) -> int:
         return 3
 
 
+def set_BMI_class(row: pd.Series) -> int:
+    """Returns BMI classification based on 2020 Korean Society for the
+    Study of Obesity Guidelines for the Management of Obesity in Korea
+    https://doi.org/10.7570/jomes21022.
+
+
+    0: underweight
+    1: normal
+    2: pre-obesity (overweight)
+    3: class I obesity
+    4: class II obesity
+    5: class III obesity
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row. Must have `BMI` feature to use (add it using `add_BMI`).
+    """
+    BMI = row['BMI']
+    if BMI < 18.5:
+        return 0
+    elif BMI < 23:
+        return 1
+    elif BMI < 25:
+        return 2
+    elif BMI < 30:
+        return 3
+    elif BMI < 35:
+        return 4
+    elif BMI >= 35:
+        return 5
+
+
 def set_sex(row: pd.Series) -> int:
     """Returns value for sex. Value is based on a rough heuristic using
     measured height and weight values from Table 2 of this paper
@@ -381,3 +412,8 @@ def add_GGT_level(df: pd.DataFrame) -> int:
 def add_de_ritis_level(df: pd.DataFrame) -> int:
     """Adds the `AST/ALT` (De Ritis ratio) feature to `df`."""
     df['AST/ALT'] = df['AST'] / df['ALT']
+
+
+def add_BMI(df: pd.DataFrame) -> int:
+    """Adds a `BMI` feature to `df`."""
+    df['BMI'] = df['weight(kg)'] / (df['height(cm)'] / 100) ** 2
