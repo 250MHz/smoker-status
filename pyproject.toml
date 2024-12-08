@@ -10,6 +10,7 @@ dependencies = [
     "numpy>=2.1.2",
     "pandas>=2.2.3",
     "scikit-learn>=1.5.2",
+    "seaborn>=0.13.2",
 ]
 
 # https://github.com/astral-sh/uv/issues/1626#issuecomment-2394365983
