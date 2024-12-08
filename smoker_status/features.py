@@ -29,6 +29,72 @@ def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([X_no_cat_feat, X_only_cat_feat_trans], axis=1)
 
 
+def set_HDL_class(row: pd.Series) -> int:
+    """Returns value for HDL cholesterol class based on Adult Treatment
+    Panel III's classification https://doi.org/10.1001/jama.285.19.2486.
+
+    0: low
+    1: normal
+    2: high
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    HDL_c = row['HDL']
+    if HDL_c < 40:
+        return 0
+    elif HDL_c < 60:
+        return 1
+    elif HDL_c >= 60:
+        return 2
+
+
+def set_LDL_class(row: pd.Series) -> int:
+    """Returns value for LDL cholesterol class based on Adult Treatment
+    Panel III's classification https://doi.org/10.1001/jama.285.19.2486.
+
+    0: optimal
+    1: near or above optimal
+    2: borderline high
+    3: high
+    4: very high
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    LDL_c = row['LDL']
+    if LDL_c < 100:
+        return 0
+    elif LDL_c < 130:
+        return 1
+    elif LDL_c < 160:
+        return 2
+    elif LDL_c < 190:
+        return 3
+    elif LDL_c >= 190:
+        return 4
+
+
+def set_cholesterol_class(row: pd.Series) -> int:
+    """Returns value for cholesterol class based on Adult Treatment
+    Panel III's classification https://doi.org/10.1001/jama.285.19.2486.
+
+    0: desirable
+    1: borderline high
+    2: high
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    cholesterol = row['Cholesterol']
+    if cholesterol < 200:
+        return 0
+    elif cholesterol < 240:
+        return 1
+    elif cholesterol >= 240:
+        return 2
+
+
 def set_sex(row: pd.Series) -> int:
     """Returns value for sex. Value is based on a rough heuristic using
     measured height and weight values from Table 2 of this paper
