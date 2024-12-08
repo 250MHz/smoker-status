@@ -113,3 +113,36 @@ def set_sex(row: pd.Series) -> int:
         else: # [60]
             pass
     return score
+
+
+def set_anemia(row: pd.Series) -> int:
+    """Returns value for anemia. Anemia is based on hemoglobin levels
+    from https://www.who.int/publications/i/item/9789240088542.
+
+    0: no anemia
+    1: mild anemia
+    2: moderate anemmia
+    3: severe anemia
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row. Must have the `sex` feature from `set_sex`.
+    """
+    hb_level = row['hemoglobin']
+    if row['sex'] > 0: # male
+        if hb_level >= 13:
+            return 0
+        elif hb_level >= 11:
+            return 1
+        elif hb_level >= 8:
+            return 2
+        elif hb_level < 8:
+            return 3
+    else: # female
+        if hb_level >= 12:
+            return 0
+        elif hb_level >= 11:
+            return 1
+        elif hb_level >= 8:
+            return 2
+        elif hb_level < 8:
+            return 3
