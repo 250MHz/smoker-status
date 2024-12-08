@@ -126,6 +126,29 @@ def set_blood_pressure_class(row: pd.Series) -> int:
         return 5
 
 
+def set_triglyceride_class(row: pd.Series) -> int:
+    """Returns value for triglyceride class based on Adult Treatment
+    Panel III's classification https://doi.org/10.1001/jama.285.19.2486.
+
+    0: normal
+    1: borderline-high
+    2: high
+    3: very high
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
+    """
+    tg = row['triglyceride']
+    if tg < 150:
+        return 0
+    elif tg < 200:
+        return 1
+    elif tg < 500:
+        return 2
+    elif tg >= 500:
+        return 3
+
+
 def set_sex(row: pd.Series) -> int:
     """Returns value for sex. Value is based on a rough heuristic using
     measured height and weight values from Table 2 of this paper
