@@ -101,8 +101,81 @@ def scale_X(X: pd.DataFrame, feats: list[str] = None) -> tuple[StandardScaler, p
     return (scaler, pd.concat([X_without_feats, X_only_feats_scaled], axis=1))
 
 
+def one_hot_encode_X(X: pd.DataFrame, feats: list[str] = None, encoded_cols: list[str] = None) -> tuple[OneHotEncoder, pd.DataFrame]:
+    """Creates a `OneHotEncoder`, fits on `X`, and return a 2-tuple
+    with the encoder and encoded copy of `X`.
+
+    NOTE: I don't think that these features are actually nominal.
+    The presence of cavities is worse than the absence.
+    And for us, sex is a heuristic value where the lower value is
+    more likely to be a female, while higher value is more likely
+    to be male.
+    From minor experimentation, I did not get better 10-fold CV scores
+    when using encoding than without.
+
+    If `feats` is None (default), the following features will be
+    encoded:
+    * hearing(left)
+    * hearing(right)
+    * dental caries
+    * sex
+    If `encoded` is None (default), the encoded features will have the
+    following names:
+    * hearing(left) - normal
+    * hearing(left) - abnormal
+    * hearing(right) - normal
+    * hearing(right) - abnormal
+    * dental caries - nonpresent
+    * dental caries - present
+    * sex - M
+    * sex - F
+
+    If `feats` or `encoded` are not None, then the passed features and
+    column names will be used.
+
+    This should be used after applying `add_sex` to `X`.
+    """
+    if feats is None:
+        feats = [
+            'hearing(left)',
+            'hearing(right)',
+            'dental caries',
+            'sex',
+        ]
+    if encoded_cols is None:
+        encoded_cols = [
+            'hearing(left) - normal',
+            'hearing(left) - abnormal',
+            'hearing(right) - normal',
+            'hearing(right) - abnormal',
+            'dental caries - nonpresent',
+            'dental caries - present',
+            'sex - M',
+            'sex - F',
+        ]
+
+    X = X.copy(deep=True)
+    X_no_feats = X.drop(feats, axis=1)
+    X_only_feats = X[feats]
+    X_only_feats['sex'] = X_only_feats.apply(lambda x:  0 if x['sex'] < 0 else 1, axis=1)
+
+    enc = OneHotEncoder(dtype=np.int64)
+    enc.fit(X_only_feats)
+    X_only_feats_trans = pd.DataFrame(
+        data=enc.transform(X_only_feats).toarray(),
+        columns=encoded_cols
+    )
+    return (enc, pd.concat([X_no_feats, X_only_feats_trans], axis=1))
+
+
 def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
-    """Performs one hot encoding on X and returns a new data frame."""
+    """Performs one hot encoding on X and returns a new data frame.
+
+    NOTE: This function was written before we added extra features
+
+    NOTE: I don't think that these features are actually nominal.
+    The presence of cavities is worse than the absence.
+    """
     cat_feats = [
         'hearing(left)',
         'hearing(right)',
