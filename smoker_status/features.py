@@ -30,13 +30,20 @@ def create_encoded_X(X: pd.DataFrame) -> pd.DataFrame:
 
 
 def set_sex(row: pd.Series) -> int:
-    """Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to
-    each row.
+    """Returns value for sex. Value is based on a rough heuristic using
+    measured height and weight values from Table 2 of this paper
+    https://doi.org/10.4178/epih.e2022024.
+
+    -2, -1: female
+    0: N/A
+    1, 2: male
+
+    Use with `pandas.DataFrame.apply`. Must use axis=1 to apply to each
+    row.
     """
     # Male, increase score by 1. Female, decrease score by 1. If score == 0,
     # then neither had majority, so np.nan
     score = 0
-    # Rough heuristic based on Table 2 from doi: 10.4178/epih.e2022024
     if row['age'] >= 19 and row['age'] <= 29:
         if row['height(cm)'] <= 165:
             score -= 1
