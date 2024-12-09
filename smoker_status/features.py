@@ -2,6 +2,83 @@ import numpy as np
 import pandas as pd
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from smoker_status.util import count_missing_values
+
+
+def setup_X2(X_train: pd.DataFrame, X_test: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    X_train = X_train.copy(deep=True)
+    X_test = X_test.copy(deep=True)
+
+    print('hi')
+
+    # Sex
+    X_train['sex'] = X_train.apply(set_sex, axis=1)
+    X_test['sex'] = X_test.apply(set_sex, axis=1)
+    # Some 'sex' values are missing, impute the rest
+    imputer = KNNImputer(n_neighbors=5, missing_values=0)
+    X_train_trans = imputer.fit_transform(X_train[['age', 'height(cm)', 'weight(kg)', 'sex']])
+    print(sum(np.isnan(X_train_trans).flatten()))
+    X_train_full_sex = pd.DataFrame(
+        X_train_trans, columns=['age', 'height(cm)', 'weight(kg)', 'sex'],
+        index=X_train.index
+    )
+    X_train['sex'] = X_train_full_sex['sex']
+    X_test_trans = imputer.transform(X_test[['age', 'height(cm)', 'weight(kg)', 'sex']])
+    X_test_full_sex = pd.DataFrame(
+        X_test_trans, columns=['age', 'height(cm)', 'weight(kg)', 'sex'],
+        index=X_test.index
+    )
+    X_test['sex'] = X_test_full_sex['sex']
+    print('X_train')
+    count_missing_values(X_train)
+    print('X_test')
+    count_missing_values(X_test)
+
+    X_train['anemia'] = X_train.apply(set_anemia, axis=1)
+    X_test['anemia'] = X_test.apply(set_anemia, axis=1)
+
+    X_train['HDL class'] = X_train.apply(set_HDL_class, axis=1)
+    X_test['HDL class'] = X_test.apply(set_HDL_class, axis=1)
+    X_train['LDL class'] = X_train.apply(set_LDL_class, axis=1)
+    X_test['LDL class'] = X_test.apply(set_LDL_class, axis=1)
+    X_train['Cholesterol class'] = X_train.apply(set_cholesterol_class, axis=1)
+    X_test['Cholesterol class'] = X_test.apply(set_cholesterol_class, axis=1)
+
+    X_train['blood pressure class'] = X_train.apply(set_blood_pressure_class, axis=1)
+    X_test['blood pressure class'] = X_test.apply(set_blood_pressure_class, axis=1)
+
+    add_GGT_level(X_train)
+    add_GGT_level(X_test)
+
+    X_train['triglyceride class'] = X_train.apply(set_triglyceride_class, axis=1)
+    X_test['triglyceride class'] = X_test.apply(set_triglyceride_class, axis=1)
+
+    X_train['creatinine class'] = X_train.apply(set_creatinine_class, axis=1)
+    X_test['creatinine class'] = X_test.apply(set_creatinine_class, axis=1)
+
+    X_train['ALT class'] = X_train.apply(set_ALT_class, axis=1)
+    X_test['ALT class'] = X_test.apply(set_ALT_class, axis=1)
+    X_train['AST class'] = X_train.apply(set_AST_class, axis=1)
+    X_test['AST class'] = X_test.apply(set_AST_class, axis=1)
+    add_de_ritis_level(X_train)
+    add_de_ritis_level(X_test)
+
+    X_train['FPG class'] = X_train.apply(set_FPG_class, axis=1)
+    X_test['FPG class'] = X_test.apply(set_FPG_class, axis=1)
+
+    add_BMI(X_train)
+    add_BMI(X_test)
+    X_train['BMI class'] = X_train.apply(set_BMI_class, axis=1)
+    X_test['BMI class'] = X_test.apply(set_BMI_class, axis=1)
+
+    update_blindness_zero(X_train)
+    update_blindness_zero(X_test)
+
+    X_train = log_transform_X(X_train)
+    X_test = log_transform_X(X_test)
+
+    X_train, X_test = scale_X2(X_train, X_test)
+    return X_train, X_test
 
 
 def setup_X(X: pd.DataFrame) -> pd.DataFrame:
@@ -68,6 +145,80 @@ def log_transform_X(X: pd.DataFrame, feats: list[str] = None) -> pd.DataFrame:
         X_copy[feat] = X_copy[feat].apply(np.log1p)
     return X_copy
 
+def scale_X2(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, feats: list[str] = None
+) -> tuple[StandardScaler, pd.DataFrame]:
+    """Creates a standard scaler, fits on `X`, and return a 2-tuple with
+    the scaler and scaled copy of X.
+
+    If `feats` is None (default), the following features will be scaled:
+    * age
+    * height(cm)
+    * weight(kg)
+    * waist(cm)
+    * systolic
+    * relaxation
+    * fasting blood sugar
+    * Cholesterol
+    * triglyceride
+    * HDL
+    * LDL
+    * hemoglobin
+    * serum creatinine
+    * AST
+    * ALT
+    * Gtp
+    * AST/ALT
+    * BMI
+
+    If `feats` is not None, then only the features you pass will be
+    scaled.
+
+    Add the extra features and log transform first before scaling if
+    you are using the default `feats`.
+    """
+    if feats is None:
+        feats = [
+            'age',
+            'height(cm)',
+            'weight(kg)',
+            'waist(cm)',
+            'systolic',
+            'relaxation',
+            'fasting blood sugar',
+            'Cholesterol',
+            'triglyceride',
+            'HDL',
+            'LDL',
+            'hemoglobin',
+            'serum creatinine',
+            'AST',
+            'ALT',
+            'Gtp',
+            'AST/ALT',
+            'BMI',
+        ]
+    X_train = X_train.copy(deep=True)
+    X_test = X_test.copy(deep=True)
+    X_train_without_feats = X_train.drop(feats, axis=1)
+    X_test_without_feats = X_test.drop(feats, axis=1)
+    X_train_only_feats = X_train[feats]
+    X_test_only_feats = X_test[feats]
+
+    scaler = StandardScaler()
+    scaler.fit(X_train_only_feats)
+    X_train_only_feats_scaled = pd.DataFrame(
+        data=scaler.transform(X_train_only_feats), columns=feats,
+        index=X_train.index
+    )
+    X_test_only_feats_scaled = pd.DataFrame(
+        data=scaler.transform(X_test_only_feats), columns=feats,
+        index=X_test.index
+    )
+    return (
+        pd.concat([X_train_without_feats, X_train_only_feats_scaled], axis=1),
+        pd.concat([X_test_without_feats, X_test_only_feats_scaled], axis=1)
+    )
 
 def scale_X(
     X: pd.DataFrame, feats: list[str] = None
