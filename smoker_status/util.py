@@ -5,7 +5,7 @@ import seaborn as sns
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import mutual_info_classif, RFECV
+from sklearn.feature_selection import mutual_info_classif, RFECV, SelectKBest
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score, train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
@@ -71,6 +71,109 @@ def try_clustering(
         )
     return X_copy
 
+def try_clustering2(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, feature_cols: list[str], n_clusters: int, plot=False
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    X_train_copy = X_train.copy(deep=True)
+    X_train_copy_only_feats = X_train_copy[feature_cols]
+    X_test_copy = X_test.copy(deep=True)
+    X_test_copy_only_feats = X_test_copy[feature_cols]
+
+    # Clustering
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    X_train_copy['Cluster'] = kmeans.fit_predict(X_train_copy_only_feats)
+    X_train_copy['Cluster'] = X_train_copy['Cluster'].astype('category')
+    X_test_copy['Cluster'] = kmeans.predict(X_test_copy_only_feats)
+    X_test_copy['Cluster'] = X_test_copy['Cluster'].astype('category')
+
+    if plot:
+        sns.relplot(
+            x=feature_cols[0], y=feature_cols[1], hue='Cluster', data=X_train_copy, height=6
+        )
+        sns.relplot(
+            x=feature_cols[0], y=feature_cols[1], hue='Cluster', data=X_test_copy, height=6
+        )
+    return (X_train_copy, X_test_copy)
+
+
+def cluster_and_classify2(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    feature_cols: list[str],
+    n_clusters: int,
+    clf: RandomForestClassifier
+    | LogisticRegression
+    | DecisionTreeClassifier
+    | KNeighborsClassifier,
+    cv: int = 10,
+    n_jobs: int = -1,
+    test_size: float = 0.3,
+) -> tuple[list[float], list[np.ndarray], list[np.ndarray], list[float]]:
+    X_train = X_train.copy(deep=True)
+    X_train['smoking'] = X_train.index.map(y_train)
+    X_test = X_test.copy(deep=True)
+    X_test['smoking'] = X_test.index.map(y_test)
+    X_train, X_test = try_clustering2(X_train, X_test, feature_cols, n_clusters)
+    accuracy_scores = []
+    fpr_list = []
+    tpr_list = []
+    AUC_list = []
+
+    # How does training work?
+    # Train a thing for each cluster
+    # Each test thing will be test based off that cluster's model
+    for i in range(n_clusters):
+        X_train_group = X_train[X_train['Cluster'] == i]
+        X_train_group.drop(['Cluster'], axis=1)
+        X_test_group = X_test[X_test['Cluster'] == i]
+        X_test_group.drop(['Cluster'], axis=1)
+
+        # Feature selection
+        # Filter method, correlation coefficient
+        # cor = X_train_group.corr()
+        # cor_target = abs(cor['smoking'])
+        # relevant_features = cor_target[cor_target > 0.1]
+        # X_train_group = X_train_group[relevant_features.index.to_list()]
+        # X_test_group = X_test_group[relevant_features.index.to_list()]
+
+        y_train_group = X_train_group.pop('smoking')
+        y_test_group = X_test_group.pop('smoking')
+
+        # Filter method, mutual information
+        # kbest = SelectKBest(mutual_info_classif)
+        # X_train_group = kbest.fit_transform(X_train_group, y_train_group)
+        # X_test_group = kbest.transform(X_test_group)
+
+        # Wrapper method, RFECV
+        min_features_to_select = 1
+        cross_validator = StratifiedKFold(5)
+        rfecv = RFECV(
+            estimator=clf,
+            step=1,
+            cv=cross_validator,
+            scoring='roc_auc',
+            min_features_to_select=min_features_to_select,
+            n_jobs=-1
+        )
+        rfecv.fit(X_train_group, y_train_group)
+        print(f'Optimal number of features: {rfecv.n_features_}')
+        X_train_group = X_train_group[rfecv.get_feature_names_out()]
+        X_test_group = X_test_group[rfecv.get_feature_names_out()]
+
+        clf.fit(X_train_group, y_train_group)
+        y_predict = clf.predict(X_test_group)
+        accuracy_scores.append(metrics.accuracy_score(y_test_group, y_predict))
+        y_predict_prob = clf.predict_proba(X_test_group)
+        fpr, tpr, thresholds = metrics.roc_curve(
+            y_test_group, y_predict_prob[:, 1], pos_label=1
+        )
+        fpr_list.append(fpr)
+        tpr_list.append(tpr)
+        AUC_list.append(metrics.auc(fpr, tpr))
+    return (accuracy_scores, fpr_list, tpr_list, AUC_list)
+
 
 def cluster_and_classify(
     X: pd.DataFrame,
@@ -108,22 +211,33 @@ def cluster_and_classify(
     for i in range(n_clusters):
         X_group = X[X['Cluster'] == i]
         X_group.drop(['Cluster'], axis=1)
-        y = X_group.pop('smoking')
 
         # Feature selection
-        # min_features_to_select = 1
-        # cross_validator = StratifiedKFold(5)
-        # rfecv = RFECV(
-        #     estimator=clf,
-        #     step=1,
-        #     cv=cross_validator,
-        #     scoring='roc_auc',
-        #     min_features_to_select=min_features_to_select,
-        #     n_jobs=-1
-        # )
-        # rfecv.fit(X_group, y)
-        # print(f'Optimal number of features: {rfecv.n_features_}')
-        # X_group = X_group[rfecv.get_feature_names_out()]
+        # Filter method, correlation coefficient
+        # cor = X_group.corr()
+        # cor_target = abs(cor['smoking'])
+        # relevant_features = cor_target[cor_target > 0.1]
+        # X_group = X_group[relevant_features.index.to_list()]
+
+        y = X_group.pop('smoking')
+
+        # Filter method, mutual information
+        # X_group = SelectKBest(mutual_info_classif).fit_transform(X_group, y)
+
+        # Wrapper method, RFECV
+        min_features_to_select = 1
+        cross_validator = StratifiedKFold(5)
+        rfecv = RFECV(
+            estimator=clf,
+            step=1,
+            cv=cross_validator,
+            scoring='roc_auc',
+            min_features_to_select=min_features_to_select,
+            n_jobs=-1
+        )
+        rfecv.fit(X_group, y)
+        print(f'Optimal number of features: {rfecv.n_features_}')
+        X_group = X_group[rfecv.get_feature_names_out()]
 
         cv_accuracy = cross_val_score(
             clf, X_group, y, cv=cv, scoring='accuracy', n_jobs=n_jobs
